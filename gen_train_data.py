@@ -10,7 +10,7 @@ if the computation resources are limited, please select a part of cropped images
 '''
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--dataset_name", type=str, default='COWC)
+parser.add_argument("--dataset_name", type=str, default='COWC')
 parser.add_argument("--loc_idx", type=str, default='Toronto_03559.8.2')
 parser.add_argument("--obj_name", type=str, default='car')
 parser.add_argument("--pos_names", type=list, default=['100_100'])
