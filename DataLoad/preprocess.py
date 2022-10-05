@@ -58,9 +58,9 @@ def checkCoordinates(data_dir):
     textfile.write(str(unknown) + " : " + str(ulabels) + "\n\n")
     textfile.close()
 
-def process(data_dir):
+def process(data_dir,result):
     # create directory to store results
-    os.makedirs('ValidationLabels', exist_ok=True)
+    os.makedirs(result, exist_ok=True)
 
     for file_name in tqdm(os.listdir(data_dir)):
 
@@ -106,16 +106,18 @@ def process(data_dir):
                 print('using the following legend feature for matching...:')
 
                 # save the raster into a .tif file
-                out_file_path=os.path.join('ValidationLabels', filename+'_label_'+label+'.jpeg')
+                out_file_path=os.path.join(result, filename+'_label_'+label+'.jpeg')
                 label_image=template.astype('uint16')
                 cv2.imwrite(out_file_path, label_image)
 
 def main():
     parser = argparse.ArgumentParser(description='map_feature_extraction')
     # load data from file
-    parser.add_argument('--data_path', type=str, default='ValidationImages', help='directory should contain JSON and Map Image .tif file')
+    parser.add_argument('--data_path', type=str, default='temp', help='directory should contain JSON and Map Image .tif file')
+    parser.add_argument('--result', type=str, default='TrainingLabels', help='Name of Output Directory')
+    
     args = parser.parse_args()
-    process(args.data_path)
+    process(args.data_path,args.result)
 
 if __name__ == "__main__":
     main()
