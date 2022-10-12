@@ -113,8 +113,8 @@ def process(data_dir,result):
 def main():
     parser = argparse.ArgumentParser(description='map_feature_extraction')
     # load data from file
-    parser.add_argument('--data_path', type=str, default='temp', help='directory should contain JSON and Map Image .tif file')
-    parser.add_argument('--result', type=str, default='TrainingLabels', help='Name of Output Directory')
+    parser.add_argument('--data_path', type=str, default='/home/tanisha/mapFEAT/trainImages', help='directory should contain JSON and Map Image .tif file')
+    parser.add_argument('--result', type=str, default='/home/tanisha/mapFEAT/TrainingLabels', help='Name of Output Directory')
     
     args = parser.parse_args()
     process(args.data_path,args.result)

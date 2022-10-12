@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 import requests
 import shutil
 import os
-import rasterio
 from tqdm import tqdm
 import argparse
 import sys
 
 def process(data_dir):
     # create directory to store results
-    os.makedirs('results', exist_ok=True)
+    output_dir = '/home/tanisha/mapFEAT/results/'
+    os.makedirs(output_dir, exist_ok=True)
     for file_name in tqdm(os.listdir(data_dir)):
 
         # get the .tif files
@@ -55,8 +55,7 @@ def process(data_dir):
                         y_max = y_t
                     
                 template = im[int(y_min):int(y_max), int(x_min):int(x_max)]
-                h, w = template.shape[0], template.shape[1]
-                print('using the following legend feature for matching...:')                
+                h, w = template.shape[0], template.shape[1]               
                 print('detecting for label:', label)
                 typ=label.split('_')[-1]
                 print('type:', typ)
@@ -66,7 +65,7 @@ def process(data_dir):
                     
                     # find all the template matches in the basemap
                     res = cv2.matchTemplate(im, template,cv2.TM_CCOEFF_NORMED)
-                    threshold = 0.39
+                    threshold = 0.22
                     loc = np.where( res >= threshold)
                     
                     # use the bounding boxes to create prediction binary raster
@@ -77,23 +76,23 @@ def process(data_dir):
                         # plt.show()
                                            
                     # print
-                    print('predicted binary raster:')
-                    print('shape:', pred_binary_raster.shape)
-                    print('unique value(s):', np.unique(pred_binary_raster))
+                    # print('predicted binary raster:')
+                    # print('shape:', pred_binary_raster.shape)
+                    # print('unique value(s):', np.unique(pred_binary_raster))
 
                     # plot the raster and save it
                     # plt.imshow(pred_binary_raster)
                     # plt.show()
                     
                     # save the raster into a .tif file
-                    out_file_path=os.path.join('results', filename+'_'+label+'.jpeg')
-                    pred_binary_raster=pred_binary_raster.astype('uint16')*255
+                    out_file_path=os.path.join(output_dir, filename+'_'+label+'.tif')
+                    pred_binary_raster=pred_binary_raster.astype('uint16')
                     cv2.imwrite(out_file_path, pred_binary_raster)
 
 def main():
     parser = argparse.ArgumentParser(description='map_feature_extraction')
     # load data from file
-    parser.add_argument('--data_path', type=str, default='ValidationImages', help='directory should contain JSON and Map Image .tif file')
+    parser.add_argument('--data_path', type=str, default='/home/tanisha/mapFEAT/TrainImages', help='directory should contain JSON and Map Image .tif file')
     args = parser.parse_args()
     process(args.data_path)
 
