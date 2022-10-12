@@ -50,9 +50,9 @@ numpy, cv2, os, shutil,
 **TGG takes cropped images and labeled target image(s) as inputs.<br/>
 The recognition results are top-left coordinates of cropped images, saved in a txt file.**
 
-<code>python3 train.py --dataset_name {dataset-name} --loc_idx {name-or-index-of-image} --obj_name {target-object-name} --augmentation {True/False} --image_size {sliding-window-size} --stride {sliding-window-stride} --num_epochs {number-of-epochs} --learning_rate {learning-rate} --batch_size {batch-size} --weight {weight-for-multiloss} --saved_model_path {path-to-save-model} </code>
+<code>python3 train.py --dataset_name {dataset-name} --loc_idx {name-or-index-of-image} --obj_name {target-object-name} --map_path {path_to_map} --augmentation {True/False} --image_size {sliding-window-size} --stride {sliding-window-stride} --num_epochs {number-of-epochs} --learning_rate {learning-rate} --batch_size {batch-size} --weight {weight-for-multiloss} --saved_model_path {path-to-save-model} --save_detected_images </code>
   
-**For example,** <code>python3 train.py --dataset_name 'COWC' --loc_idx 'Toronto_03559.8.2' --obj_name='car' --augmentation True --image_size 50 --stride 20 --num-epochs 500 --learning_rate 0.0001 --batch_size 200 --weight 500 --saved_model_path 'TGG.hd5f' </code>
+**For example,** <code>python3 train.py --dataset_name 'COWC' --loc_idx 'Toronto_03559.8.2' --obj_name='car' --map_path='./data/COWC/Toronto_03553.7.8/Toronto_03553.7.8.jpg' --augmentation True --image_size 50 --stride 20 --num-epochs 500 --learning_rate 0.0001 --batch_size 200 --weight 500 --saved_model_path 'TGG.hd5f' </code>
 
 ### Step 3: Evaluation
 **The evaluation script takes bounding-box level ground truth and image-level recognition results as inputs.<br/> 

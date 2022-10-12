@@ -39,38 +39,39 @@ def process_inputs(_x_u, _x_l, batch_size):
     print('all samples shape: ', _x_u.shape)
     return _x_u, _x_l_aug
     
-def inference(model, x_test, x_test_idx, x_l_test, loc_name, thres, pos_folder_path, img_size=30):
+def inference(model, x_test, x_test_idx, x_l_test, thres, pos_folder_path, save_dir, img_size=30):
     print('processing {:s}'.format(loc_name))
     while x_l_test.shape[0] < x_test.shape[0]:
         x_l_test = np.vstack((x_l_test, x_l_test[:x_test.shape[0]-x_l_test.shape[0]])) 
 
     x_l_test = x_l_test[:x_test.shape[0]]
 
-    x_u_pred0,x_u_pred1,x_l_pred,y_u_pred,_,_,_,_,_,_,_,_,_,_ = model.predict([x_test,x_l_test,np.array([[1,0]]*x_test.shape[0])\
-               ,np.array([[0,1]]*x_test.shape[0])])
+    x_u_pred0, x_u_pred1, x_l_pred, y_u_pred, _,_,_,_,_,_,_,_,_,_ \
+        = model.predict([x_test, x_l_test, np.array([[1,0]]*x_test.shape[0]), np.array([[0,1]]*x_test.shape[0])])
 
     detected_idx = helper.load_file_names(pos_folder_path)
     print('num of detected: ', len(detected_idx))
     pred_pos_idx = []
-    num_detected = len(helper.load_file_names(os.path.join('multi_check_data',loc_name)))
+    num_detected = len(helper.load_file_names(save_dir))
     while num_detected == 0 and thres>0.5:   
         for i in range(x_test.shape[0]): 
             if y_u_pred[i, 0] > thres:
                 pred_pos_idx.append(x_test_idx[i])
                 temp_name = loc_name + '_' + x_test_idx[i]
                 if temp_name not in detected_idx:
-                    print(x_test_idx[i],y_u_pred[i])
-                    cv2.imwrite(os.path.join('multi_check_data',loc_name,'_'.join([loc_name,x_test_idx[i]+'.png'])), x_test[i].reshape((img_size, img_size, 3))*255)
+                    cv2.imwrite(os.path.join(save_dir, x_test_idx[i]+'.png']), x_test[i].reshape((img_size, img_size, 3))*255)
+                    print('save new detected image in %s'%(save_dir))
         thres = thres - 0.0019
-        num_detected = len(helper.load_file_names(os.path.join('multi_check_data',loc_name)))
-        print(thres, num_detected)
-    print('number of detected in {:s} is {:d}'.format(loc_name, num_detected))
+        num_detected = len(helper.load_file_names(save_dir))
+        print('the threshold and num of detected image: ', thres, num_detected)
+    print('total number of detected in is {:d}'.format(num_detected))
 
     
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset_name", type=str, default='COWC')
 parser.add_argument("--obj_name", type=str, default='car')
 parser.add_argument("--loc_idx", type=str, default='car')
+parse.add_argument("--map_path", type=str, default='./data/COWC/Toronto_03553.7.8/Toronto_03553.7.8.jpg')
 parser.add_argument("--augmentation", type=boolean, default=True)
 parser.add_argument("--image_size", type=int, default=50)
 parser.add_argument("--stride", type=int, default=20)
@@ -79,18 +80,19 @@ parser.add_argument("--learning_rate", type=float, default=0.0001)
 parser.add_argument("--batch_size", type=int, default=400)
 parser.add_argument("--weight", type=int, default=500)
 parser.add_argument("--saved_model_path", type=str, default='TGG.h5df')
+parser.add_argument("--save_detection_folder", type=str, default='./detected_img')
 args = parser.parse_args()
 #######################################################    
 # hyperparamters
-os.environ["CUDA_VISIBLE_DEVICES"]="2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 obj_name = args.obj_name
 dataset_name = args.dataset_name
 loc_idx = args.loc_idx
-DATA_DIR = '_'.join([obj_name, args.dataset_name, 'test'])
+# DATA_DIR = '_'.join([obj_name, args.dataset_name, 'test'])
 
 if args.augmentation:
-    SHIFT_LIST = [-2,-1,0,1,2] 
-    ROTATION_ANGLE = [90,180,270,360]
+    SHIFT_LIST = [-2, -1 ,0, 1, 2] 
+    ROTATION_ANGLE = [90, 180, 270, 360]
 else: 
     SHIFT_LIST = [] 
     ROTATION_ANGLE = []
@@ -101,8 +103,8 @@ EPOCHS = args.num_epochs
 LEARNING_RATE = args.learnign_rate
 BATCH_SIZE = args.batch_size
 
-latent_dim = 16#32, 5
-intermediate_dim = 256#256 for dior ships
+latent_dim = 16 #32, 5
+intermediate_dim = 256 #256 for dior ships
 num_cls = 2
 optimizer = Adam(lr=LEARNING_RATE)
 # optimizer = RMSprop(lr=LEARNING_RATE)
@@ -111,12 +113,14 @@ original_dim = IMG_SIZE*IMG_SIZE*3
 w_recons, w_kl, w_ce = IMG_SIZE*IMG_SIZE*3.0, 1.0, args.weight
 threshold = 0.5
 
-path = os.path.join('multi_check_data',loc_idx)
-pos_samples_path = os.path.join('multi_maps_data',obj_name,loc_idx,'pos_samples')
-map_path = os.path.join(DATA_DIR, loc_idx+'.jpg')
-SAVE_MODEL_PATH = os.path.join(obj_name,loc_idx,'_'.join(['TGG',loc_idx+'.hdf5']))
-print(pos_samples_path)
-print(map_path)
+sample_path = os.path.join('data', dataset_name, obj_name)
+loc_name = '_'.join([loc_idx, obj_name])
+pos_samples_path = os.path.join(sample_path, loc_name+'_samples', 'positive')
+map_path = args.map_path
+save_detection_path = args.save_detection_folder
+SAVE_MODEL_PATH = args.saved_model_path
+print('directory for labeled images: ', pos_samples_path)
+print('path to the map: ', map_path)
 #######################################################
 
 #######################################################
@@ -124,8 +128,7 @@ print(map_path)
 labele_samples, _ = load_data.load_wetland_samples(pos_samples_path)
 all_samples, _ = load_data.load_all_data(map_path, '', IMG_SIZE, STRIDE)
 _x_u, _x_l_aug = process_inputs(all_samples, labele_samples, BATCH_SIZE)
-print('processing {:d}, {:s}: '.format(i, loc_idx))
-print('x_u, x_l_aug shape: ', _x_u.shape, _x_l_aug.shape)
+print('unlabeled img, augmented labeled img shape: ', _x_u.shape, _x_l_aug.shape)
 #######################################################
 
 #######################################################
@@ -137,16 +140,13 @@ TGG.train_tgg(vae, optimizer, _x_u, _x_l_aug, EPOCHS, BATCH_SIZE, SAVE_MODEL_PAT
 
 #######################################################
 # Testing Phase
-vae = TGG.initialize_tgg(original_dim, num_cls, latent_dim, intermediate_dim,w_recons, w_kl, w_ce)
+vae = TGG.initialize_tgg(original_dim, num_cls, latent_dim, intermediate_dim, w_recons, w_kl, w_ce)
 vae.load_weights(SAVE_MODEL_PATH)
-pos_samples_path = os.path.join('multi_maps_data',obj_name,loc_idx,'pos_samples')
-path = os.path.join('multi_check_data',loc_idx)
-helper.create_folder(path)
-helper.remove_files(path)
-map_path = os.path.join(DATA_DIR, loc_idx+'.jpg')
+helper.create_folder(save_detection_path)
+helper.remove_files(save_detection_path)
 x_test, x_test_idx = load_data.load_all_data(map_path, '', IMG_SIZE, STRIDE)
 x_test = np.array(x_test) / 255.0
 x_test = np.reshape(x_test, (-1, IMG_SIZE*IMG_SIZE*3))
 threshold = 0.501
-inference(vae, x_test,  x_test_idx, _x_l_aug, loc_idx, threshold, pos_samples_path)
+inference(vae, x_test,  x_test_idx, _x_l_aug, threshold, pos_samples_path, save_detection_path)
 #######################################################
